@@ -1,0 +1,29 @@
+{
+  "name": "opencode-notion-agent",
+  "version": "1.0.0",
+  "description": "Automated task management system that connects Notion databases with OpenCode AI agents",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun run --watch src/index.ts"
+  },
+  "keywords": [
+    "notion",
+    "opencode",
+    "ai",
+    "automation",
+    "task-management"
+  ],
+  "author": "Lee Adkins",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "latest",
+    "@opencode-ai/sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
