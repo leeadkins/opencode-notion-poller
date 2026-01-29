@@ -6,12 +6,16 @@ import { writeFile } from "fs/promises";
 // Load environment variables
 const NOTION_TOKEN = process.env.NOTION_TOKEN!;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID!;
-const OPENCODE_BASE_URL = process.env.OPENCODE_BASE_URL || "http://localhost:4096";
-const CHECK_INTERVAL_MINUTES = parseInt(process.env.CHECK_INTERVAL_MINUTES || "30");
+const OPENCODE_BASE_URL =
+  process.env.OPENCODE_BASE_URL || "http://localhost:4096";
+const CHECK_INTERVAL_MINUTES = parseInt(
+  process.env.CHECK_INTERVAL_MINUTES || "30",
+);
 const OPENCODE_AGENT_NAME = process.env.OPENCODE_AGENT_NAME || "OpenCode";
 const DEFAULT_REASSIGN_TO = process.env.DEFAULT_REASSIGN_TO || "YourName";
 const OPENCODE_MODEL_PROVIDER = process.env.OPENCODE_MODEL_PROVIDER || "google";
-const OPENCODE_MODEL_ID = process.env.OPENCODE_MODEL_ID || "gemini-3-flash-preview";
+const OPENCODE_MODEL_ID =
+  process.env.OPENCODE_MODEL_ID || "gemini-3-flash-preview";
 const TRIGGER_FILE = process.env.TRIGGER_FILE || ".trigger";
 
 // Parse project mappings
@@ -92,7 +96,10 @@ async function getOpenCodeTasks(): Promise<NotionTask[]> {
 
     return response.results
       .map((page: any) => {
-        const titleProp = page.properties.Name || page.properties.Title || page.properties.title;
+        const titleProp =
+          page.properties.Name ||
+          page.properties.Title ||
+          page.properties.title;
         const title = titleProp?.title?.[0]?.plain_text || "Untitled";
         const status = page.properties.Status?.select?.name || "Unknown";
         const agent = page.properties.Agent?.select?.name || "Unknown";
@@ -112,7 +119,9 @@ async function getOpenCodeTasks(): Promise<NotionTask[]> {
       .filter((task) => {
         // Filter out tasks without a valid project mapping
         if (!task.projectPath) {
-          console.warn(`⚠️  Skipping task "${task.title}" - no project mapping for "${task.project}"`);
+          console.warn(
+            `⚠️  Skipping task "${task.title}" - no project mapping for "${task.project}"`,
+          );
           return false;
         }
         return true;
@@ -158,7 +167,7 @@ function generateAgentPrompt(task: NotionTask, assignBackTo: string): string {
 **Project:** ${task.project}
 **Working Directory:** ${task.projectPath}
 **Notion Page URL:** ${task.url}
-**Assign Back To:** ${assignBackTo}
+**Default Assign Back To:** ${assignBackTo}
 
 ## FIRST STEP - READ THE NOTION PAGE
 
@@ -186,7 +195,7 @@ You have access to a Notion MCP server that allows you to interact with Notion p
 
 3. **When you're done or reach a stopping point**, you MUST update the Notion page:
    - Use the Notion MCP to update the page at ${task.url}
-   - Change the "Agent" property back to: "${assignBackTo}"
+   - Change the "Agent" property to whoever was requested in the document, or to the default if no one is mentioned to: "${assignBackTo}"
    - Update the "Status" property:
      * Set to "Done" if you've fully completed the task with high confidence
      * Keep as "In Progress" if there's more work to do or you're uncertain
@@ -274,7 +283,6 @@ async function startOpenCodeSession(task: NotionTask, assignBackTo: string) {
 
     // Note: We're not waiting for the session to complete
     // The agent will update Notion itself when done via Notion MCP
-
   } catch (error) {
     console.error("❌ Error starting OpenCode session:", error);
   }
@@ -285,7 +293,9 @@ async function startOpenCodeSession(task: NotionTask, assignBackTo: string) {
  */
 async function processTasks() {
   console.log("\n" + "=".repeat(60));
-  console.log(`🔍 Checking for OpenCode tasks... (${new Date().toLocaleString()})`);
+  console.log(
+    `🔍 Checking for OpenCode tasks... (${new Date().toLocaleString()})`,
+  );
   console.log("=".repeat(60));
 
   const tasks = await getOpenCodeTasks();
@@ -348,14 +358,19 @@ async function main() {
     await opencode.session.list();
     console.log("✓ Connected to OpenCode server\n");
   } catch (error) {
-    console.error("❌ Could not connect to OpenCode server at", OPENCODE_BASE_URL);
+    console.error(
+      "❌ Could not connect to OpenCode server at",
+      OPENCODE_BASE_URL,
+    );
     console.error("   Make sure OpenCode is running!");
     process.exit(1);
   }
 
   // Create the trigger file if it doesn't exist
   try {
-    await writeFile(TRIGGER_FILE, new Date().toISOString() + "\n", { flag: "a" });
+    await writeFile(TRIGGER_FILE, new Date().toISOString() + "\n", {
+      flag: "a",
+    });
     console.log(`✓ Trigger file ready: ${TRIGGER_FILE}\n`);
   } catch (error) {
     console.warn("⚠️  Could not create trigger file:", error);
@@ -366,14 +381,22 @@ async function main() {
   let lastMtime = 0;
 
   console.log(`👀 Watching trigger file: ${TRIGGER_FILE}`);
-  console.log(`   Tip: Run 'touch ${TRIGGER_FILE}' to trigger immediate check\n`);
+  console.log(
+    `   Tip: Run 'touch ${TRIGGER_FILE}' to trigger immediate check\n`,
+  );
 
   watchFile(TRIGGER_FILE, { interval: 1000 }, async (curr, prev) => {
     // Check if file was modified (mtime changed)
-    if (curr.mtimeMs !== lastMtime && curr.mtimeMs > prev.mtimeMs && !isProcessing) {
+    if (
+      curr.mtimeMs !== lastMtime &&
+      curr.mtimeMs > prev.mtimeMs &&
+      !isProcessing
+    ) {
       lastMtime = curr.mtimeMs;
       isProcessing = true;
-      console.log(`\n🔔 Trigger file modified (${new Date(curr.mtime).toLocaleTimeString()}) - running immediate check...\n`);
+      console.log(
+        `\n🔔 Trigger file modified (${new Date(curr.mtime).toLocaleTimeString()}) - running immediate check...\n`,
+      );
       await processTasks();
       isProcessing = false;
     }
@@ -388,7 +411,9 @@ async function main() {
     await processTasks();
   }, intervalMs);
 
-  console.log(`⏰ Scheduled to check every ${CHECK_INTERVAL_MINUTES} minutes...`);
+  console.log(
+    `⏰ Scheduled to check every ${CHECK_INTERVAL_MINUTES} minutes...`,
+  );
   console.log(`💡 Or touch '${TRIGGER_FILE}' anytime to trigger immediately`);
 }
 
